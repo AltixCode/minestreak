@@ -7,6 +7,7 @@ import { t } from '@/i18n';
 import type { Board, Point } from '@/logic/board';
 import { numberTone } from '@/theme/numberTones';
 import { useTheme } from '@/theme';
+import { cellsFor } from '@/theme/cells';
 
 /**
  * The minefield.
@@ -30,6 +31,10 @@ export function MineGrid({
 }) {
   const { width, height } = useWindowDimensions();
   const { colors, spacing, radius, isDark } = useTheme();
+  // Explored and unexplored ground must be told apart at a glance: surface and
+  // surfaceAlt differ by 1.08:1, which is invisible, and a cascaded-open region
+  // of blank cells has no number to distinguish it either.
+  const cells = cellsFor(isDark);
 
   const rows = board.length;
   const cols = board[0]?.length ?? 0;
@@ -72,13 +77,13 @@ export function MineGrid({
                   alignItems: 'center',
                   justifyContent: 'center',
                   borderRadius: radius.xs,
-                  backgroundColor: shown ? colors.surface : colors.surfaceAlt,
+                  backgroundColor: shown ? cells.revealed : cells.hidden,
                   borderWidth: shown ? 0 : 1,
                   borderColor: colors.border,
                 }}
               >
                 {cell.flagged && !shown ? (
-                  <Text variant="caption" tone="danger">
+                  <Text variant="caption" color={cells.flag}>
                     ⚑
                   </Text>
                 ) : shown && cell.mine ? (
