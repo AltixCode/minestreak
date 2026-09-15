@@ -34,7 +34,11 @@ export function MineGrid({
   const rows = board.length;
   const cols = board[0]?.length ?? 0;
   const gap = 2;
-  const available = Math.min(width - spacing.base * 2, height * 0.52, 460);
+  // Sized from the space there is. A flat cap set against a small phone leaves
+  // the board in the top third of a 6.9" screen with the rest empty, and a 13"
+  // iPad worse — which reads as an app nobody has opened on a modern device.
+  const cap = width >= 700 ? 690 : 552;
+  const available = Math.min(width - spacing.base * 2, height * 0.58, cap);
   const side = Math.floor((available - gap * (cols - 1)) / cols);
 
   return (
