@@ -5,6 +5,7 @@ import { Pressable, View } from 'react-native';
 import { BannerAdSlot } from '@/components/BannerAdSlot';
 import { Screen, Text } from '@/components/ui';
 import { t } from '@/i18n';
+import { archiveRow } from '@/theme/archiveRows';
 import { addDays, todayKey } from '@/logic/dateKey';
 import { FREE_ARCHIVE_DAYS, canPlay, isDayWon } from '@/logic/progress';
 import { usePremiumStore } from '@/store/usePremiumStore';
@@ -53,6 +54,9 @@ export default function Archive() {
           {days.map((key) => {
             const playable = canPlay(key, today, isPremium);
             const done = isDayWon(progress[key]);
+            // A locked day is tappable -- it opens the paywall -- so it is
+            // information, not a disabled control, and must not be dimmed.
+            const row = archiveRow(colors, playable);
             return (
               <Pressable
                 key={key}
@@ -67,12 +71,14 @@ export default function Archive() {
                   minHeight: 52,
                   paddingHorizontal: spacing.base,
                   borderRadius: radius.md,
-                  backgroundColor: colors.surface,
-                  opacity: playable ? 1 : 0.5,
+                  backgroundColor: row.background,
+                  opacity: row.opacity,
                 }}
               >
-                <Text variant="body">{key}</Text>
-                <Text variant="caption" tone={done ? 'accent' : 'muted'}>
+                <Text variant="body" color={row.text}>
+                  {key}
+                </Text>
+                <Text variant="caption" color={done && playable ? colors.accent : row.badge}>
                   {playable ? done ? t('wonTitle') : t('cellHidden') : t('proBadge')}
                 </Text>
               </Pressable>
