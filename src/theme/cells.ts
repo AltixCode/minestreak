@@ -35,16 +35,28 @@ export interface CellColours {
   flag: string;
 }
 
+// 3:1 is the WCAG threshold for a non-text UI component, and "which cells have
+// I already cleared" is exactly that — a state read at a glance across a whole
+// board. An earlier pass stopped at 1.90:1, which was a large improvement on
+// 1.08:1 and still under the bar; the only reason it stopped there was that the
+// flag had been sharing the `danger` token, and giving the flag its own colour
+// had already removed that ceiling. These clear 3:1 in both themes.
+//
+// Where the next constraint actually binds, for whoever pushes further: in the
+// light theme the revealed cell is already white, so only the hidden surface can
+// move, and darkening it eats the flag's contrast against it. In the dark theme
+// the revealed cell is nearly black, so the adjacency numbers have room to
+// spare — the worst of the eight still measures above 10:1.
 export const darkCells: CellColours = {
-  hidden: '#5C3535',
-  revealed: '#100808',
-  flag: '#FCA5A5',
+  hidden: '#8A5050',
+  revealed: '#0D0606',
+  flag: '#FEE2E2',
 };
 
 export const lightCells: CellColours = {
-  hidden: '#C6C0B3',
+  hidden: '#98907F',
   revealed: '#FFFFFF',
-  flag: '#991B1B',
+  flag: '#450A0A',
 };
 
 export const cellsFor = (isDark: boolean): CellColours => (isDark ? darkCells : lightCells);

@@ -1,15 +1,17 @@
 import { contrastRatio } from '../color';
 import { darkCells, lightCells, cellsFor } from '../cells';
+import { NUMBER_TONES_DARK, NUMBER_TONES_LIGHT } from '../numberTones';
 import { darkPalette, lightPalette } from '../tokens';
 
 /**
  * The separation a player needs between explored and unexplored ground.
  *
- * Not a WCAG text figure — this is surface against surface. The value it
- * replaced was 1.08:1, which is invisible; anything below this is a regression
- * of the defect found on a real device.
+ * 3:1 is the WCAG threshold for a non-text UI component, which is what this is:
+ * a state read at a glance across a whole board rather than a piece of text.
+ * The value it replaced was 1.08:1 — invisible — and an intermediate fix stopped
+ * at 1.90:1, which was better and still under the bar.
  */
-const MIN_STATE_SEPARATION = 1.75;
+const MIN_STATE_SEPARATION = 3;
 
 describe('cell surfaces', () => {
   it('makes a revealed cell clearly distinguishable from a hidden one', () => {
@@ -23,7 +25,19 @@ describe('cell surfaces', () => {
 
   // The regression this file exists to prevent, stated as a number.
   it('is nowhere near the 1.08:1 it replaced', () => {
-    expect(contrastRatio(darkCells.hidden, darkCells.revealed)).toBeGreaterThan(1.5);
+    expect(contrastRatio(darkCells.hidden, darkCells.revealed)).toBeGreaterThan(3);
+  });
+
+  // The dark theme's revealed cell is nearly black, so every adjacency number
+  // has room to spare. This is the constraint that would bind first if anyone
+  // lightened it.
+  it('keeps every adjacency number legible on the revealed cell', () => {
+    for (const tone of NUMBER_TONES_DARK) {
+      expect(contrastRatio(tone, darkCells.revealed)).toBeGreaterThan(4.5);
+    }
+    for (const tone of NUMBER_TONES_LIGHT) {
+      expect(contrastRatio(tone, lightCells.revealed)).toBeGreaterThan(4.5);
+    }
   });
 
   it('keeps the number on a revealed cell comfortably legible', () => {
