@@ -1,42 +1,78 @@
-import { fireEvent } from '@testing-library/react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { fireEvent, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
 import Home from '../index';
 import { testRouter } from './testRouter';
 import { renderWithProviders } from '@/components/__tests__/renderWithProviders';
 import { t } from '@/i18n';
+import { todayKey } from '@/logic/dateKey';
 import { useAdsConsentStore } from '@/store/useAdsConsentStore';
 import { usePremiumStore } from '@/store/usePremiumStore';
+import { useResultsStore } from '@/store/useResultsStore';
 
-beforeEach(() => {
+const TODAY = todayKey();
+const realHydrate = useResultsStore.getState().hydrate;
+
+const seed = (results: Record<string, { won: boolean; seconds: number }>) =>
+  AsyncStorage.setItem('minestreak.results.v1', JSON.stringify(results));
+
+beforeEach(async () => {
   jest.clearAllMocks();
+  await AsyncStorage.clear();
   usePremiumStore.setState({ isPremium: false, isReady: true });
   useAdsConsentStore.setState({ consent: { canServeAds: true, offerPrivacyOptions: false } });
+  useResultsStore.setState({ results: {}, isHydrated: false, hydrate: realHydrate });
 });
 
-// No `jest.restoreAllMocks()` here. It restores every spy in the process, not
-// only this file's — including ones the renderer itself relies on — and the
-// next test's tree then renders and is immediately torn down, which surfaces as
-// "unable to find an element" on a screen that plainly renders it in isolation.
-// `jest.clearAllMocks()` in beforeEach resets call counts, and each test that
-// needs a spy installs its own.
-
 describe('Home', () => {
-  it('renders the app name and routes to settings', async () => {
+  it('leads with the promise the app is built on', async () => {
     const { getByText } = await renderWithProviders(<Home />);
-    expect(getByText(t('appName'))).toBeTruthy();
-    await fireEvent.press(getByText(t('settingsTitle')));
+    expect(getByText(t('todayTitle'))).toBeTruthy();
+    expect(getByText(t('fairPromise'))).toBeTruthy();
+  });
+
+  it('opens today’s board', async () => {
+    const { getByLabelText } = await renderWithProviders(<Home />);
+    await fireEvent.press(getByLabelText(t('digMode')));
+    expect(testRouter.push).toHaveBeenCalledWith(`/play/${TODAY}`);
+  });
+
+  it('shows a dash instead of a zero streak until results have loaded', async () => {
+    const hydrate = jest.fn().mockImplementation(() => new Promise<void>(() => {}));
+    useResultsStore.setState({ results: {}, isHydrated: false, hydrate });
+    const { getByText } = await renderWithProviders(<Home />);
+    expect(getByText('—')).toBeTruthy();
+  });
+
+  it('shows the streak once results have loaded', async () => {
+    await seed({ [TODAY]: { won: true, seconds: 40 } });
+    const { getByText } = await renderWithProviders(<Home />);
+    await waitFor(() => expect(getByText('1')).toBeTruthy());
+  });
+
+  it('marks a day already cleared', async () => {
+    await seed({ [TODAY]: { won: true, seconds: 40 } });
+    const { getByText } = await renderWithProviders(<Home />);
+    await waitFor(() => expect(getByText(t('wonTitle'))).toBeTruthy());
+    expect(getByText(t('playAgain'))).toBeTruthy();
+  });
+
+  it('routes to the archive, stats and settings', async () => {
+    const { getByLabelText } = await renderWithProviders(<Home />);
+    await fireEvent.press(getByLabelText(t('archiveTitle')));
+    await fireEvent.press(getByLabelText(t('statsTitle')));
+    await fireEvent.press(getByLabelText(t('settingsTitle')));
+    expect(testRouter.push).toHaveBeenCalledWith('/archive');
+    expect(testRouter.push).toHaveBeenCalledWith('/stats');
     expect(testRouter.push).toHaveBeenCalledWith('/settings');
   });
 
-  it('shows a banner to a free user', async () => {
-    const { queryByTestId } = await renderWithProviders(<Home />);
-    expect(queryByTestId('banner-ad')).not.toBeNull();
-  });
-
-  it('shows no banner to a premium user — the whole point of the upgrade', async () => {
+  it('shows a banner to a free user and none to a premium one', async () => {
+    const free = await renderWithProviders(<Home />);
+    expect(free.queryByTestId('banner-ad')).not.toBeNull();
     usePremiumStore.setState({ isPremium: true });
-    const { queryByTestId } = await renderWithProviders(<Home />);
-    expect(queryByTestId('banner-ad')).toBeNull();
+    const paid = await renderWithProviders(<Home />);
+    expect(paid.queryByTestId('banner-ad')).toBeNull();
   });
 });
