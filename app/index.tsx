@@ -30,7 +30,28 @@ export default function Home() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <Screen scroll topInset>
+      {/* Centred when there is room, top-anchored when there is not.
+          `flexGrow: 1` makes the content container at least the height of the
+          viewport, so `justifyContent: 'center'` has slack to work with only
+          when the content is shorter than the screen; once it overflows, the
+          container grows past the viewport and centring has no effect, so the
+          screen scrolls from the top exactly as before.
+
+          The shared `Screen` deliberately does NOT centre, and that decision is
+          right for the screens it was written for -- a list or a board centred
+          on a tall display leaves dead space above *and* below, which is worse
+          than dead space below alone. This screen is the exception the rule
+          needs: it is a menu of four controls that cannot grow with use, so
+          there is no amount of user data that will ever fill a 13" display. For
+          content like that, centring is what the eye expects.
+
+          Keyed to available space rather than to a device: it behaves the same
+          way on a large Android tablet, a small one, and a phone in landscape. */}
+      <Screen
+        scroll
+        topInset
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
+      >
         <View
           style={{
             flexDirection: 'row',
