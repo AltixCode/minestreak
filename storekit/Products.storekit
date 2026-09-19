@@ -1,0 +1,35 @@
+{
+  "identifier": "54C59B9E-4EA0-4D7C-BFEE-144EE88A8653",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "4.99",
+      "familyShareable": false,
+      "internalID": "30B9A34A-4103-480D-A569-C3E73F16E13A",
+      "localizations": [
+        {
+          "description": "minestreak remove ads lifetime unlock",
+          "displayName": "minestreak remove ads",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.altixcode.minestreak.removeads",
+      "referenceName": "minestreak remove ads",
+      "type": "NonConsumable"
+    }
+  ],
+  "settings": {
+    "_applicationInternalID": "",
+    "_developerTeamID": "",
+    "_failTransactionsEnabled": false,
+    "_lastSynchronizedDate": 0,
+    "_locale": "en_US",
+    "_storefront": "USA",
+    "_storeKitErrors": []
+  },
+  "subscriptionGroups": [],
+  "version": {
+    "major": 4,
+    "minor": 0
+  }
+}
