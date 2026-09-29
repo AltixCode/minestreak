@@ -1,14 +1,14 @@
-import { useRouter } from 'expo-router';
-import React, { useEffect } from 'react';
-import { Pressable, View } from 'react-native';
+import { useRouter } from "expo-router";
+import React, { useCallback, useEffect } from "react";
+import { Alert, Pressable, View } from "react-native";
 
-import { BannerAdSlot } from '@/components/BannerAdSlot';
-import { Button, Screen, Text } from '@/components/ui';
-import { t } from '@/i18n';
-import { todayKey } from '@/logic/dateKey';
-import { currentStreak, isDayWon } from '@/logic/progress';
-import { useResultsStore } from '@/store/useResultsStore';
-import { useTheme } from '@/theme';
+import { BannerAdSlot } from "@/components/BannerAdSlot";
+import { Button, Screen, Text } from "@/components/ui";
+import { t } from "@/i18n";
+import { todayKey } from "@/logic/dateKey";
+import { currentStreak, isDayWon } from "@/logic/progress";
+import { useResultsStore } from "@/store/useResultsStore";
+import { useTheme } from "@/theme";
 
 export default function Home() {
   const router = useRouter();
@@ -22,6 +22,10 @@ export default function Home() {
   useEffect(() => {
     void hydrate();
   }, [hydrate]);
+
+  const showHowToPlay = useCallback(() => {
+    Alert.alert(t("howToPlayTitle"), t("howToPlayBody"), [{ text: t("ok") }]);
+  }, []);
 
   // Only meaningful once saved results have been read: showing a zero first
   // would tell a player on a 40-day run that they had lost it.
@@ -50,28 +54,32 @@ export default function Home() {
       <Screen
         scroll
         topInset
-        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
       >
         <View
           style={{
-            flexDirection: 'row',
-            alignItems: 'flex-end',
-            justifyContent: 'space-between',
-            marginTop: spacing['2xl'],
+            flexDirection: "row",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
+            marginTop: spacing["2xl"],
           }}
         >
           <View style={{ flex: 1 }}>
-            <Text variant="display">{t('todayTitle')}</Text>
-            <Text variant="caption" tone="muted" style={{ marginTop: spacing.xs }}>
-              {t('fairPromise')}
+            <Text variant="display">{t("todayTitle")}</Text>
+            <Text
+              variant="caption"
+              tone="muted"
+              style={{ marginTop: spacing.xs }}
+            >
+              {t("fairPromise")}
             </Text>
           </View>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={t('statsTitle')}
-            onPress={() => router.push('/stats')}
+            accessibilityLabel={t("statsTitle")}
+            onPress={() => router.push("/stats")}
             style={{
-              alignItems: 'center',
+              alignItems: "center",
               minWidth: 64,
               minHeight: 44,
               paddingHorizontal: spacing.md,
@@ -80,19 +88,28 @@ export default function Home() {
               backgroundColor: colors.surface,
             }}
           >
-            <Text variant="bodyStrong">{streak === null ? '—' : String(streak)}</Text>
+            <Text variant="bodyStrong">
+              {streak === null ? "—" : String(streak)}
+            </Text>
             <Text variant="micro" tone="faint">
-              {t('streakLabel')}
+              {t("streakLabel")}
             </Text>
           </Pressable>
         </View>
 
         <Button
-          label={done ? t('playAgain') : t('digMode')}
+          label={t("howToPlayCta")}
+          variant="ghost"
+          onPress={showHowToPlay}
+          style={{ alignSelf: "flex-start", marginTop: spacing.md }}
+        />
+
+        <Button
+          label={done ? t("playAgain") : t("digMode")}
           size="lg"
           fullWidth
           onPress={() => router.push(`/play/${today}`)}
-          style={{ marginTop: spacing.xl }}
+          style={{ marginTop: spacing.lg }}
         />
 
         {done ? (
@@ -105,41 +122,47 @@ export default function Home() {
             }}
           >
             <Text variant="bodyStrong" tone="accent">
-              {t('wonTitle')}
+              {t("wonTitle")}
             </Text>
           </View>
         ) : null}
 
-        <View style={{ flexDirection: 'row', gap: spacing.md, marginTop: spacing.xl }}>
+        <View
+          style={{
+            flexDirection: "row",
+            gap: spacing.md,
+            marginTop: spacing.xl,
+          }}
+        >
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={t('archiveTitle')}
-            onPress={() => router.push('/archive')}
+            accessibilityLabel={t("archiveTitle")}
+            onPress={() => router.push("/archive")}
             style={{
               flex: 1,
               minHeight: 48,
-              alignItems: 'center',
-              justifyContent: 'center',
+              alignItems: "center",
+              justifyContent: "center",
               borderRadius: radius.md,
               backgroundColor: colors.surfaceAlt,
             }}
           >
-            <Text variant="callout">{t('archiveTitle')}</Text>
+            <Text variant="callout">{t("archiveTitle")}</Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={t('settingsTitle')}
-            onPress={() => router.push('/settings')}
+            accessibilityLabel={t("settingsTitle")}
+            onPress={() => router.push("/settings")}
             style={{
               flex: 1,
               minHeight: 48,
-              alignItems: 'center',
-              justifyContent: 'center',
+              alignItems: "center",
+              justifyContent: "center",
               borderRadius: radius.md,
               backgroundColor: colors.surfaceAlt,
             }}
           >
-            <Text variant="callout">{t('settingsTitle')}</Text>
+            <Text variant="callout">{t("settingsTitle")}</Text>
           </Pressable>
         </View>
       </Screen>

@@ -1,98 +1,166 @@
-import { fireEvent, waitFor } from '@testing-library/react-native';
-import React from 'react';
+import { fireEvent, waitFor } from "@testing-library/react-native";
+import React from "react";
 
-import PlayRoute from '../play/[date]';
-import { setRouteParams } from './testRouter';
-import { renderWithProviders } from '@/components/__tests__/renderWithProviders';
-import { t } from '@/i18n';
-import { mineCount } from '@/logic/board';
-import { boardFor } from '@/logic/daily';
-import { solveNoGuess } from '@/logic/solve';
-import { useAdsConsentStore } from '@/store/useAdsConsentStore';
-import { usePremiumStore } from '@/store/usePremiumStore';
-import { useResultsStore } from '@/store/useResultsStore';
+import PlayRoute from "../play/[date]";
+import { setRouteParams } from "./testRouter";
+import { renderWithProviders } from "@/components/__tests__/renderWithProviders";
+import { t } from "@/i18n";
+import { mineCount } from "@/logic/board";
+import * as daily from "@/logic/daily";
+import { boardFor } from "@/logic/daily";
+import { solveNoGuess } from "@/logic/solve";
+import { useAdsConsentStore } from "@/store/useAdsConsentStore";
+import { usePremiumStore } from "@/store/usePremiumStore";
+import { useResultsStore } from "@/store/useResultsStore";
 
 // A fixed date keeps the board stable, so these assertions describe a real one.
-const DATE = '2026-09-18';
+const DATE = "2026-09-18";
 const { board: BOARD, start: START } = boardFor(DATE);
 
 beforeEach(() => {
   jest.clearAllMocks();
   usePremiumStore.setState({ isPremium: false, isReady: true });
-  useAdsConsentStore.setState({ consent: { canServeAds: true, offerPrivacyOptions: false } });
+  useAdsConsentStore.setState({
+    consent: { canServeAds: true, offerPrivacyOptions: false },
+  });
   useResultsStore.setState({ results: {}, isHydrated: true });
   setRouteParams({ date: DATE });
 });
 
-describe('Play', () => {
-  it('shows how many mines are left', async () => {
+describe("Play", () => {
+  it("shows how many mines are left", async () => {
     const { getByText } = await renderWithProviders(<PlayRoute />);
-    expect(getByText(t('minesLeft', { count: mineCount(BOARD) }))).toBeTruthy();
+    expect(getByText(t("minesLeft", { count: mineCount(BOARD) }))).toBeTruthy();
   });
 
-  it('renders every cell', async () => {
+  it("renders every cell", async () => {
     const { getAllByLabelText } = await renderWithProviders(<PlayRoute />);
     const cells = getAllByLabelText(/^(Row|Fila|Ligne|Zeile|Γραμμή)/);
     expect(cells).toHaveLength(BOARD.length * BOARD[0]!.length);
   });
 
-  it('starts in dig mode and toggles to flagging', async () => {
+  it("starts in dig mode and toggles to flagging", async () => {
     const { getByLabelText } = await renderWithProviders(<PlayRoute />);
-    expect(getByLabelText(t('digMode')).props.accessibilityState).toMatchObject({ checked: false });
-    await fireEvent.press(getByLabelText(t('digMode')));
+    expect(getByLabelText(t("digMode")).props.accessibilityState).toMatchObject(
+      { checked: false },
+    );
+    await fireEvent.press(getByLabelText(t("digMode")));
     await waitFor(() =>
-      expect(getByLabelText(t('flagMode')).props.accessibilityState).toMatchObject({ checked: true }),
+      expect(
+        getByLabelText(t("flagMode")).props.accessibilityState,
+      ).toMatchObject({ checked: true }),
     );
   });
 
-  it('digging reveals a cell', async () => {
-    const { getByLabelText, getAllByLabelText } = await renderWithProviders(<PlayRoute />);
-    const before = getAllByLabelText(new RegExp(t('cellHidden'))).length;
+  it("digging reveals a cell", async () => {
+    const { getByLabelText, getAllByLabelText } = await renderWithProviders(
+      <PlayRoute />,
+    );
+    const before = getAllByLabelText(new RegExp(t("cellHidden"))).length;
     await fireEvent.press(
-      getByLabelText(t('cellA11y', { row: START.r + 1, col: START.c + 1, state: t('cellHidden') })),
+      getByLabelText(
+        t("cellA11y", {
+          row: START.r + 1,
+          col: START.c + 1,
+          state: t("cellHidden"),
+        }),
+      ),
     );
     await waitFor(() =>
-      expect(getAllByLabelText(new RegExp(t('cellHidden'))).length).toBeLessThan(before),
+      expect(
+        getAllByLabelText(new RegExp(t("cellHidden"))).length,
+      ).toBeLessThan(before),
     );
   });
 
-  it('flagging marks a cell instead of digging it', async () => {
+  it("flagging marks a cell instead of digging it", async () => {
     const { getByLabelText } = await renderWithProviders(<PlayRoute />);
-    await fireEvent.press(getByLabelText(t('digMode')));
-    const cell = t('cellA11y', { row: START.r + 1, col: START.c + 1, state: t('cellHidden') });
+    await fireEvent.press(getByLabelText(t("digMode")));
+    const cell = t("cellA11y", {
+      row: START.r + 1,
+      col: START.c + 1,
+      state: t("cellHidden"),
+    });
     await fireEvent.press(getByLabelText(cell));
     await waitFor(() =>
       expect(
-        getByLabelText(t('cellA11y', { row: START.r + 1, col: START.c + 1, state: t('cellFlagged') })),
+        getByLabelText(
+          t("cellA11y", {
+            row: START.r + 1,
+            col: START.c + 1,
+            state: t("cellFlagged"),
+          }),
+        ),
       ).toBeTruthy(),
     );
   });
 
-  it('a hint opens a cell the deduction solver would open — never a guess', async () => {
-    const { getByLabelText, getAllByLabelText } = await renderWithProviders(<PlayRoute />);
-    const before = getAllByLabelText(new RegExp(t('cellHidden'))).length;
-    await fireEvent.press(getByLabelText(t('hint')));
+  it("a hint opens a cell the deduction solver would open — never a guess", async () => {
+    const { getByLabelText, getAllByLabelText } = await renderWithProviders(
+      <PlayRoute />,
+    );
+    const before = getAllByLabelText(new RegExp(t("cellHidden"))).length;
+    await fireEvent.press(getByLabelText(t("hint")));
     await waitFor(() =>
-      expect(getAllByLabelText(new RegExp(t('cellHidden'))).length).toBeLessThan(before),
+      expect(
+        getAllByLabelText(new RegExp(t("cellHidden"))).length,
+      ).toBeLessThan(before),
     );
   });
 
-  it('clears the board when every deduced cell is opened, and records the win', async () => {
+  it("clears the board when every deduced cell is opened, and records the win", async () => {
     // Premium, because a free player gets exactly one hint.
     usePremiumStore.setState({ isPremium: true });
     const steps = solveNoGuess(BOARD, START).revealed.length + 4;
-    const { getByLabelText, getByText, queryByLabelText } = await renderWithProviders(<PlayRoute />);
+    const { getByLabelText, getByText, queryByLabelText } =
+      await renderWithProviders(<PlayRoute />);
     for (let i = 0; i < steps; i += 1) {
-      const hint = queryByLabelText(t('hint'));
+      const hint = queryByLabelText(t("hint"));
       if (!hint) break;
       await fireEvent.press(hint);
     }
-    await waitFor(() => expect(getByText(t('wonTitle'))).toBeTruthy());
+    await waitFor(() => expect(getByText(t("wonTitle"))).toBeTruthy());
     expect(useResultsStore.getState().results[DATE]?.won).toBe(true);
-    expect(getByLabelText(t('restart'))).toBeTruthy();
+    expect(getByLabelText(t("restart"))).toBeTruthy();
   });
 
   it("the day's board really is clearable without a guess", () => {
     expect(solveNoGuess(BOARD, START).solved).toBe(true);
+  });
+
+  it("restarting after a loss deals a fresh bomb layout, not the same board again", async () => {
+    const spy = jest.spyOn(daily, "practiceBoardFor");
+    let mine: { r: number; c: number } | undefined;
+    for (let r = 0; r < BOARD.length && !mine; r += 1) {
+      for (let c = 0; c < BOARD[r]!.length; c += 1) {
+        if (BOARD[r]![c]!.mine) {
+          mine = { r, c };
+          break;
+        }
+      }
+    }
+    if (!mine) throw new Error("the fixture board has no mines");
+
+    const { getByLabelText, getByText } = await renderWithProviders(
+      <PlayRoute />,
+    );
+    await fireEvent.press(
+      getByLabelText(
+        t("cellA11y", {
+          row: mine.r + 1,
+          col: mine.c + 1,
+          state: t("cellHidden"),
+        }),
+      ),
+    );
+    await waitFor(() => expect(getByText(t("lostTitle"))).toBeTruthy());
+
+    // A restart offered before anything is decided must not touch the day's
+    // official board — only a restart AFTER a finish opens a fresh one.
+    expect(spy).not.toHaveBeenCalled();
+
+    await fireEvent.press(getByLabelText(t("restart")));
+
+    await waitFor(() => expect(spy).toHaveBeenCalledWith(DATE));
   });
 });
