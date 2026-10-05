@@ -147,7 +147,11 @@ export default function Paywall() {
         <Text variant="body" tone="muted" style={{ marginTop: spacing.xl }}>
           <Text
             color={colors.accent}
-            style={{ fontSize: 56, lineHeight: 48, fontWeight: "800" }}
+            // Matches the weight already used by `display`/`title` elsewhere
+            // in the scale (700) rather than an 800 that appears nowhere else
+            // in the app, and keeps the line box at least as tall as the
+            // glyph -- 48 under a 56pt letter was clipping its descender.
+            style={{ fontSize: 56, lineHeight: 56, fontWeight: "700" }}
           >
             {dropCapLetter}
           </Text>

@@ -1,13 +1,13 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import * as Haptics from 'expo-haptics';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Pressable, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from "expo-router";
+import * as Haptics from "expo-haptics";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Alert, Pressable, View } from "react-native";
 
-import { BannerAdSlot } from '@/components/BannerAdSlot';
-import { MineGrid } from '@/components/game/MineGrid';
-import { Button, Screen, Text } from '@/components/ui';
-import { useDailyBoard } from '@/hooks/useDailyBoard';
-import { t } from '@/i18n';
+import { BannerAdSlot } from "@/components/BannerAdSlot";
+import { MineGrid } from "@/components/game/MineGrid";
+import { Button, Screen, Text } from "@/components/ui";
+import { useDailyBoard } from "@/hooks/useDailyBoard";
+import { t } from "@/i18n";
 import {
   flagCount,
   isLost,
@@ -17,22 +17,23 @@ import {
   toggleFlag,
   type Board,
   type Point,
-} from '@/logic/board';
-import { todayKey } from '@/logic/dateKey';
-import { solveNoGuess } from '@/logic/solve';
-import { shouldShowInterstitial } from '@/monetization/adPolicy';
-import { showInterstitial } from '@/monetization/interstitial';
-import { isRewardedReady, showRewarded } from '@/monetization/rewarded';
-import { useResultsStore } from '@/store/useResultsStore';
-import { usePremiumStore } from '@/store/usePremiumStore';
-import { useTheme } from '@/theme';
+} from "@/logic/board";
+import { practiceBoardFor } from "@/logic/daily";
+import { todayKey } from "@/logic/dateKey";
+import { solveNoGuess } from "@/logic/solve";
+import { shouldShowInterstitial } from "@/monetization/adPolicy";
+import { showInterstitial } from "@/monetization/interstitial";
+import { isRewardedReady, showRewarded } from "@/monetization/rewarded";
+import { useResultsStore } from "@/store/useResultsStore";
+import { usePremiumStore } from "@/store/usePremiumStore";
+import { useTheme } from "@/theme";
 
 const FREE_HINTS = 1;
 
 function formatSeconds(total: number): string {
   const m = Math.floor(total / 60);
   const s = total % 60;
-  return `${m}:${String(s).padStart(2, '0')}`;
+  return `${m}:${String(s).padStart(2, "0")}`;
 }
 
 export default function PlayRoute() {
@@ -73,10 +74,15 @@ function Session({ date }: { date: string }) {
   useEffect(() => {
     if (!finished || recorded.current) return;
     recorded.current = true;
-    const seconds = Math.max(1, Math.round((Date.now() - startedAt.current) / 1000));
+    const seconds = Math.max(
+      1,
+      Math.round((Date.now() - startedAt.current) / 1000),
+    );
     setFinishedSeconds(seconds);
     void Haptics.notificationAsync(
-      won ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Error,
+      won
+        ? Haptics.NotificationFeedbackType.Success
+        : Haptics.NotificationFeedbackType.Error,
     );
     record(date, won, seconds);
 
@@ -96,7 +102,9 @@ function Session({ date }: { date: string }) {
   const press = useCallback(
     (at: Point) => {
       if (finished) return;
-      setBoard((current) => (flagging ? toggleFlag(current, at) : reveal(current, at)));
+      setBoard((current) =>
+        flagging ? toggleFlag(current, at) : reveal(current, at),
+      );
     },
     [flagging, finished],
   );
@@ -105,8 +113,14 @@ function Session({ date }: { date: string }) {
     recorded.current = false;
     startedAt.current = Date.now();
     setFinishedSeconds(null);
-    setBoard(initial);
-  }, [initial]);
+    // A restart offered once the board is finished (won or lost) deals a
+    // fresh practice board instead of replaying the exact same mine layout —
+    // reusing `initial` there is the bug feedback called out: the map never
+    // changed, so a loss just meant memorizing it. Nothing is decided yet on
+    // a mid-game "give up and restart", so that one keeps today's official
+    // board.
+    setBoard(finished ? practiceBoardFor(date).board : initial);
+  }, [initial, finished, date]);
 
   const applyHint = useCallback(() => {
     // Open the next cell the deduction solver would open — never a guess.
@@ -124,7 +138,7 @@ function Session({ date }: { date: string }) {
       return;
     }
     if (!isRewardedReady()) {
-      Alert.alert(t('noHintsLeft'), t('adNotReady'));
+      Alert.alert(t("noHintsLeft"), t("adNotReady"));
       return;
     }
     void showRewarded().then((earned) => {
@@ -137,30 +151,35 @@ function Session({ date }: { date: string }) {
       <Screen scroll>
         <View
           style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
             marginTop: spacing.base,
           }}
         >
-          <Text variant="bodyStrong">{t('minesLeft', { count: Math.max(0, remaining) })}</Text>
+          <Text variant="bodyStrong">
+            {t("minesLeft", { count: Math.max(0, remaining) })}
+          </Text>
           <Pressable
             accessibilityRole="switch"
-            accessibilityLabel={flagging ? t('flagMode') : t('digMode')}
+            accessibilityLabel={flagging ? t("flagMode") : t("digMode")}
             accessibilityState={{ checked: flagging }}
             onPress={() => setFlagging((f) => !f)}
             style={{
               minHeight: 44,
               minWidth: 96,
-              alignItems: 'center',
-              justifyContent: 'center',
+              alignItems: "center",
+              justifyContent: "center",
               paddingHorizontal: spacing.base,
               borderRadius: radius.md,
               backgroundColor: flagging ? colors.accent : colors.surfaceAlt,
             }}
           >
-            <Text variant="callout" color={flagging ? colors.onAccent : colors.text}>
-              {flagging ? t('flagMode') : t('digMode')}
+            <Text
+              variant="callout"
+              color={flagging ? colors.onAccent : colors.text}
+            >
+              {flagging ? t("flagMode") : t("digMode")}
             </Text>
           </Pressable>
         </View>
@@ -168,24 +187,56 @@ function Session({ date }: { date: string }) {
         <MineGrid board={board} revealAll={lost} onPress={press} />
 
         {finished ? (
-          <View style={{ alignItems: 'center', marginTop: spacing.xl, gap: spacing.sm }}>
-            <Text variant="heading" tone={won ? 'accent' : 'danger'}>
-              {won ? t('wonTitle') : t('lostTitle')}
+          <View
+            style={{
+              alignItems: "center",
+              marginTop: spacing.xl,
+              gap: spacing.sm,
+            }}
+          >
+            <Text variant="heading" tone={won ? "accent" : "danger"}>
+              {won ? t("wonTitle") : t("lostTitle")}
             </Text>
             <Text variant="caption" tone="muted" align="center">
               {won && finishedSeconds !== null
-                ? t('solvedIn', { time: formatSeconds(finishedSeconds) })
-                : t('lostBody')}
+                ? t("solvedIn", { time: formatSeconds(finishedSeconds) })
+                : t("lostBody")}
             </Text>
-            <View style={{ flexDirection: 'row', gap: spacing.md, marginTop: spacing.md }}>
-              <Button label={t('restart')} onPress={restart} />
-              <Button label={t('archiveTitle')} variant="ghost" onPress={() => router.replace('/')} />
+            <View
+              style={{
+                flexDirection: "row",
+                gap: spacing.md,
+                marginTop: spacing.md,
+              }}
+            >
+              <Button label={t("restart")} onPress={restart} />
+              <Button
+                label={t("archiveTitle")}
+                variant="ghost"
+                onPress={() => router.replace("/")}
+              />
             </View>
           </View>
         ) : (
-          <View style={{ flexDirection: 'row', gap: spacing.md, marginTop: spacing.xl }}>
-            <Button label={t('hint')} variant="secondary" onPress={onHint} style={{ flex: 1 }} />
-            <Button label={t('restart')} variant="ghost" onPress={restart} style={{ flex: 1 }} />
+          <View
+            style={{
+              flexDirection: "row",
+              gap: spacing.md,
+              marginTop: spacing.xl,
+            }}
+          >
+            <Button
+              label={t("hint")}
+              variant="secondary"
+              onPress={onHint}
+              style={{ flex: 1 }}
+            />
+            <Button
+              label={t("restart")}
+              variant="ghost"
+              onPress={restart}
+              style={{ flex: 1 }}
+            />
           </View>
         )}
       </Screen>
