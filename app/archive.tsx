@@ -1,16 +1,16 @@
-import { useRouter } from 'expo-router';
-import React from 'react';
-import { Pressable, View } from 'react-native';
+import { useRouter } from "expo-router";
+import React from "react";
+import { Pressable, View } from "react-native";
 
-import { BannerAdSlot } from '@/components/BannerAdSlot';
-import { Screen, Text } from '@/components/ui';
-import { t } from '@/i18n';
-import { archiveRow } from '@/theme/archiveRows';
-import { addDays, todayKey } from '@/logic/dateKey';
-import { FREE_ARCHIVE_DAYS, canPlay, isDayWon } from '@/logic/progress';
-import { usePremiumStore } from '@/store/usePremiumStore';
-import { useResultsStore } from '@/store/useResultsStore';
-import { useTheme } from '@/theme';
+import { BannerAdSlot } from "@/components/BannerAdSlot";
+import { Screen, Text } from "@/components/ui";
+import { t } from "@/i18n";
+import { archiveRow } from "@/theme/archiveRows";
+import { addDays, todayKey } from "@/logic/dateKey";
+import { FREE_ARCHIVE_DAYS, canPlay, isDayWon } from "@/logic/progress";
+import { usePremiumStore } from "@/store/usePremiumStore";
+import { useResultsStore } from "@/store/useResultsStore";
+import { useTheme } from "@/theme";
 
 /** Two weeks back: enough to show the free window and what the unlock adds. */
 const VISIBLE_DAYS = 21;
@@ -22,7 +22,9 @@ export default function Archive() {
   const progress = useResultsStore((s) => s.results);
   const isPremium = usePremiumStore((s) => s.isPremium);
 
-  const days = Array.from({ length: VISIBLE_DAYS }, (_, i) => addDays(today, -i));
+  const days = Array.from({ length: VISIBLE_DAYS }, (_, i) =>
+    addDays(today, -i),
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -30,8 +32,8 @@ export default function Archive() {
         {!isPremium ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={t('archiveLocked')}
-            onPress={() => router.push('/paywall')}
+            accessibilityLabel={t("archiveLocked")}
+            onPress={() => router.push("/paywall")}
             style={{
               marginTop: spacing.base,
               padding: spacing.base,
@@ -42,10 +44,10 @@ export default function Archive() {
             }}
           >
             <Text variant="bodyStrong" tone="accent">
-              {t('archiveLocked')}
+              {t("archiveLocked")}
             </Text>
             <Text variant="caption" tone="muted" style={{ marginTop: 2 }}>
-              {t('archiveFreeWindow', { count: FREE_ARCHIVE_DAYS })}
+              {t("archiveFreeWindow", { count: FREE_ARCHIVE_DAYS })}
             </Text>
           </Pressable>
         ) : null}
@@ -61,13 +63,16 @@ export default function Archive() {
               <Pressable
                 key={key}
                 accessibilityRole="button"
-                accessibilityLabel={`${key} — ${done ? t('wonTitle') : t('cellHidden')}`}
-                accessibilityState={{ disabled: !playable }}
-                onPress={() => (playable ? router.push(`/play/${key}`) : router.push('/paywall'))}
+                accessibilityLabel={`${key} — ${done ? t("wonTitle") : t("cellHidden")}`}
+                onPress={() =>
+                  playable
+                    ? router.push(`/play/${key}`)
+                    : router.push("/paywall")
+                }
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
                   minHeight: 52,
                   paddingHorizontal: spacing.base,
                   borderRadius: radius.md,
@@ -78,8 +83,15 @@ export default function Archive() {
                 <Text variant="body" color={row.text}>
                   {key}
                 </Text>
-                <Text variant="caption" color={done && playable ? colors.accent : row.badge}>
-                  {playable ? done ? t('wonTitle') : t('cellHidden') : t('proBadge')}
+                <Text
+                  variant="caption"
+                  color={done && playable ? colors.accent : row.badge}
+                >
+                  {playable
+                    ? done
+                      ? t("wonTitle")
+                      : t("cellHidden")
+                    : t("proBadge")}
                 </Text>
               </Pressable>
             );
